@@ -10,6 +10,7 @@ import (
 
 var (
 	debug    = flag.Bool("debug", false, "Disable UI and see raw data (debug mode)")
+	csvdump  = flag.Bool("csv", false, "Write every point into CSV file [i.e. 20160201_150405.csv]")
 	interval = flag.Duration("i", 1*time.Second, "Update interval")
 )
 
@@ -36,7 +37,17 @@ func main() {
 		return
 	}
 
+	// init stuff
 	data := NewData()
+	var csv *CSVDump
+	if *csvdump {
+		csv, err = NewCSVDump()
+		if err != nil {
+			fmt.Println("[ERROR] Can't create csv file, aborting:", err)
+			return
+		}
+	}
+
 	ui := initUI(pid, *interval)
 	defer stopUI()
 
@@ -47,7 +58,12 @@ func main() {
 		if err != nil {
 			return
 		}
+
+		// update data
 		data.AddCPUValue(cpu)
+		if *csvdump {
+			csv.Add(cpu)
+		}
 
 		ui.UpdateCPU(data.CPU())
 		ui.Render()
