@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"strconv"
 	"strings"
 )
 
@@ -22,22 +21,12 @@ func adbCPU(pid int64) (float64, error) {
 		return 0, err
 	}
 
-	line := parseTopOutput(out)
-
-	fields := strings.Fields(line)
-	if len(fields) < 10 {
-		fmt.Println("[ERROR]: wrong top output", fields)
-		return 0, ErrParse
-	}
-	cpu, err := strconv.ParseFloat(fields[9], 64)
+	top, err := NewTopOutput(out)
 	if err != nil {
-		// this usually means that app is in background and top
-		// omits
-		fmt.Println("[ERROR] Parse CPU value:", err)
-		fmt.Println("Output:", fields)
-		return 0, ErrParse
+		return 0, err
 	}
-	return cpu, nil
+
+	return top.CPU, nil
 }
 
 // adbShell calls custom command via 'adb shell` and returns it's stdout output.
@@ -58,11 +47,4 @@ func adbShell(command string) (string, error) {
 	}
 
 	return buf.String(), nil
-}
-
-// parseTopOutput parses line from the android shell top's output.
-// It contains one line with data and many newlines.
-func parseTopOutput(data string) string {
-	lines := strings.Split(data, "\r")
-	return strings.Replace(lines[0], "\r", "", -1)
 }
