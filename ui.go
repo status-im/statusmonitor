@@ -17,7 +17,8 @@ type UI struct {
 	CPULine *termui.Sparkline
 
 	// fields needed only for UI display
-	maxCPU float64
+	interval time.Duration
+	maxCPU   float64
 }
 
 func initUI(pid int64, interval time.Duration) *UI {
@@ -26,8 +27,10 @@ func initUI(pid int64, interval time.Duration) *UI {
 		panic(err)
 	}
 
-	ui := &UI{}
-	ui.createHeader(pid, interval)
+	ui := &UI{
+		interval: interval,
+	}
+	ui.createHeader(pid)
 	ui.createSparklines()
 	ui.createLayout()
 
@@ -66,6 +69,10 @@ func (ui *UI) UpdateCPU(data []float64) {
 // Render rerenders UI.
 func (ui *UI) Render() {
 	termui.Body.Align()
+
+	// update history time estimation based on new size and interval
+	ui.Sparklines.BorderLabel = fmt.Sprintf("CPU (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+
 	// TODO: prettify this
 	termui.Render(ui.Headers[0], ui.Headers[1], ui.Headers[2], ui.Sparklines)
 }
@@ -91,7 +98,7 @@ func (ui *UI) createLayout() {
 	)
 }
 
-func (ui *UI) createHeader(pid int64, interval time.Duration) {
+func (ui *UI) createHeader(pid int64) {
 	p := termui.NewPar("")
 	p.Height = HeaderHeight
 	p.TextFgColor = termui.ColorWhite
@@ -111,14 +118,14 @@ func (ui *UI) createHeader(pid int64, interval time.Duration) {
 	p2.TextFgColor = termui.ColorWhite
 	p2.BorderLabel = "Polling interval"
 	p2.BorderFg = termui.ColorCyan
-	p2.Text = fmt.Sprintf("%v", interval)
+	p2.Text = fmt.Sprintf("%v", ui.interval)
 
 	ui.Headers = []*termui.Par{p, p1, p2}
 }
 
 func (ui *UI) createSparklines() {
 	s := termui.NewSparkline()
-	s.Height = termui.TermHeight() - HeaderHeight - 3 // - header - border
+	s.Height = termui.TermHeight() - HeaderHeight - 3 // - border
 	s.LineColor = termui.ColorGreen
 
 	ui.CPULine = &s
@@ -127,7 +134,7 @@ func (ui *UI) createSparklines() {
 	ss := termui.NewSparklines(s)
 	ss.Height = termui.TermHeight() - HeaderHeight
 	ss.Border = true
-	ss.BorderLabel = "CPU"
+	ss.BorderLabel = fmt.Sprintf("CPU (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 
 	ui.Sparklines = ss
 }
