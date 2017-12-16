@@ -7,21 +7,27 @@ import (
 	"github.com/gizak/termui"
 )
 
+const HeaderHeight = 3
+
 // UI represents UI layout.
 type UI struct {
-	Header     *termui.Par
+	Headers    []*termui.Par
 	Sparklines *termui.Sparklines
 
 	CPULine *termui.Sparkline
+
+	Interval time.Duration
 }
 
-func initUI(pid int64) *UI {
+func initUI(pid int64, interval time.Duration) *UI {
 	err := termui.Init()
 	if err != nil {
 		panic(err)
 	}
 
-	ui := &UI{}
+	ui := &UI{
+		Interval: interval,
+	}
 	ui.createHeader(pid)
 	ui.createSparklines()
 	ui.createLayout()
@@ -49,7 +55,8 @@ func (ui *UI) UpdateCPU(data []float64) {
 
 // Render rerenders UI.
 func (ui *UI) Render() {
-	termui.Render(ui.Header, ui.Sparklines)
+	// TODO: prettify this
+	termui.Render(ui.Headers[0], ui.Headers[1], ui.Headers[2], ui.Sparklines)
 }
 
 // Align recalculates layout and aligns widgets.
@@ -58,9 +65,14 @@ func (ui *UI) Align() {
 }
 
 func (ui *UI) createLayout() {
+	if len(ui.Headers) != 3 {
+		panic("update headers code")
+	}
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(12, 0, ui.Header),
+			termui.NewCol(4, 0, ui.Headers[0]),
+			termui.NewCol(4, 0, ui.Headers[1]),
+			termui.NewCol(4, 0, ui.Headers[2]),
 		),
 		termui.NewRow(
 			termui.NewCol(12, 0, ui.Sparklines),
@@ -69,18 +81,33 @@ func (ui *UI) createLayout() {
 }
 
 func (ui *UI) createHeader(pid int64) {
-	p := termui.NewPar("Press `q` to exit")
-	p.Height = 3
+	p := termui.NewPar("")
+	p.Height = HeaderHeight
 	p.TextFgColor = termui.ColorWhite
-	p.BorderLabel = fmt.Sprintf("Monitoring Status.im app on PID %d", pid)
+	p.BorderLabel = "Monitoring Status.im via adb"
 	p.BorderFg = termui.ColorCyan
+	p.Text = "press 'q' to exit"
 
-	ui.Header = p
+	p1 := termui.NewPar("")
+	p1.Height = HeaderHeight
+	p1.TextFgColor = termui.ColorWhite
+	p1.BorderLabel = "PID"
+	p1.BorderFg = termui.ColorCyan
+	p1.Text = fmt.Sprintf("%d", pid)
+
+	p2 := termui.NewPar("")
+	p2.Height = HeaderHeight
+	p2.TextFgColor = termui.ColorWhite
+	p2.BorderLabel = "Polling interval"
+	p2.BorderFg = termui.ColorCyan
+	p2.Text = fmt.Sprintf("%v", ui.Interval)
+
+	ui.Headers = []*termui.Par{p, p1, p2}
 }
 
 func (ui *UI) createSparklines() {
 	s := termui.NewSparkline()
-	s.Height = termui.TermHeight() - ui.Header.Height - 3 // - border
+	s.Height = termui.TermHeight() - HeaderHeight - 3 // - header - border
 	s.Title = "Status.im CPU"
 	s.LineColor = termui.ColorGreen
 
@@ -88,7 +115,7 @@ func (ui *UI) createSparklines() {
 
 	// single
 	ss := termui.NewSparklines(s)
-	ss.Height = termui.TermHeight() - ui.Header.Height
+	ss.Height = termui.TermHeight() - HeaderHeight
 	ss.Border = true
 
 	ui.Sparklines = ss

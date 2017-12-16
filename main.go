@@ -37,7 +37,7 @@ func main() {
 	}
 
 	data := NewData()
-	ui := initUI(pid)
+	ui := initUI(pid, *interval)
 	defer stopUI()
 
 	ui.HandleKeys()
