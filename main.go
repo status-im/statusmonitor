@@ -9,7 +9,8 @@ import (
 )
 
 var (
-	debug = flag.Bool("noui", false, "Disable UI and see raw data (debug mode)")
+	debug    = flag.Bool("debug", false, "Disable UI and see raw data (debug mode)")
+	interval = flag.Duration("i", 1*time.Second, "Update interval")
 )
 
 func main() {
@@ -30,17 +31,19 @@ func main() {
 				continue
 			}
 			fmt.Println("CPU:", cpu)
-			time.Sleep(1 * time.Second)
+			time.Sleep(*interval)
 		}
 		return
 	}
 
+	data := NewData()
+	_ = data
 	ui := initUI(pid)
 	defer stopUI()
 
 	ui.HandleKeys()
 
-	ui.AddTimer(1*time.Second, func(e termui.Event) {
+	ui.AddTimer(*interval, func(e termui.Event) {
 		cpu, err := adbCPU(pid)
 		if err != nil {
 			return
