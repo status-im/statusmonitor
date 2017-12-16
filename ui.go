@@ -70,11 +70,14 @@ func (ui *UI) UpdateCPU(data []float64) {
 func (ui *UI) Render() {
 	termui.Body.Align()
 
-	// update history time estimation based on new size and interval
+	// Update widgets:
+	// history time estimation based on new size and interval
 	ui.Sparklines.BorderLabel = fmt.Sprintf("CPU (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+	// time in header
+	ui.Headers[3].Text = fmt.Sprintf("%v", time.Now().Format("15:04:05"))
 
 	// TODO: prettify this
-	termui.Render(ui.Headers[0], ui.Headers[1], ui.Headers[2], ui.Sparklines)
+	termui.Render(ui.Headers[0], ui.Headers[1], ui.Headers[2], ui.Headers[3], ui.Sparklines)
 }
 
 // Align recalculates layout and aligns widgets.
@@ -83,14 +86,15 @@ func (ui *UI) Align() {
 }
 
 func (ui *UI) createLayout() {
-	if len(ui.Headers) != 3 {
+	if len(ui.Headers) != 4 {
 		panic("update headers code")
 	}
 	termui.Body.AddRows(
 		termui.NewRow(
-			termui.NewCol(4, 0, ui.Headers[0]),
-			termui.NewCol(4, 0, ui.Headers[1]),
-			termui.NewCol(4, 0, ui.Headers[2]),
+			termui.NewCol(6, 0, ui.Headers[0]),
+			termui.NewCol(2, 0, ui.Headers[1]),
+			termui.NewCol(2, 0, ui.Headers[2]),
+			termui.NewCol(2, 0, ui.Headers[3]),
 		),
 		termui.NewRow(
 			termui.NewCol(12, 0, ui.Sparklines),
@@ -120,7 +124,14 @@ func (ui *UI) createHeader(pid int64) {
 	p2.BorderFg = termui.ColorCyan
 	p2.Text = fmt.Sprintf("%v", ui.interval)
 
-	ui.Headers = []*termui.Par{p, p1, p2}
+	p3 := termui.NewPar("")
+	p3.Height = HeaderHeight
+	p3.TextFgColor = termui.ColorYellow
+	p3.BorderLabel = "Time"
+	p3.BorderFg = termui.ColorCyan
+	p3.Text = fmt.Sprintf("%v", time.Now().Format("15:04:05"))
+
+	ui.Headers = []*termui.Par{p, p1, p2, p3}
 }
 
 func (ui *UI) createSparklines() {
