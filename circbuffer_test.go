@@ -2,13 +2,17 @@ package main
 
 import "testing"
 
-func TestCircBuffer(t *testing.T) {
-	buf := NewBuffer(3)
+func TestCircularBuffer(t *testing.T) {
+	buf := NewCircularBuffer(3)
+	got := buf.Data()
+	expected := []float64{}
+	compareData(t, got, expected)
+
 	buf.Add(5.0)
 	buf.Add(10.0)
 
-	got := buf.Data()
-	expected := []float64{5.0, 10.0}
+	got = buf.Data()
+	expected = []float64{5.0, 10.0}
 	compareData(t, got, expected)
 
 	buf.Add(15.0)
