@@ -6,6 +6,22 @@ import (
 	"strings"
 )
 
+// adbCPU returns CPU value for the given PID via `adb shell` command.
+func adbCPU(pid int64) (float64, error) {
+	cmd := fmt.Sprintf("top -p %d -n 1 -q -b -o %%CPU", pid)
+	out, err := adbShell(cmd)
+	if err != nil {
+		return 0, err
+	}
+
+	top, err := NewTopOutput(out)
+	if err != nil {
+		return 0, err
+	}
+
+	return top.CPU, nil
+}
+
 // TopOutput represents data from 'top' command output
 // for single process.
 type TopOutput struct {
@@ -14,19 +30,11 @@ type TopOutput struct {
 
 // NewTopOutput creates new TopOutput from raw stdout data.
 func NewTopOutput(data string) (*TopOutput, error) {
-	fields := parseTopOutput(data)
-	if len(fields) < 11 {
-		fmt.Println("[ERROR]: wrong top output", fields)
-		return nil, ErrParse
-	}
+	line := cleanTopOutput(data)
 
-	// eithh field is supposed to be CPU value
-	cpu, err := strconv.ParseFloat(fields[8], 64)
+	cpu, err := strconv.ParseFloat(line, 64)
 	if err != nil {
-		// top output might be different from system to system, so log
-		// this verbosely
 		fmt.Println("[ERROR] Parse CPU value:", err)
-		fmt.Println("Output:", fields)
 		return nil, ErrParse
 	}
 
@@ -35,10 +43,10 @@ func NewTopOutput(data string) (*TopOutput, error) {
 	}, nil
 }
 
-func parseTopOutput(data string) []string {
+func cleanTopOutput(data string) string {
 	lines := strings.Split(data, "\r")
 	line := strings.Replace(lines[0], "\r", "", -1)
+	line = strings.Replace(lines[0], "\b", "", -1)
 	line = strings.TrimSpace(line)
-	fields := strings.Fields(line)
-	return fields
+	return line
 }
