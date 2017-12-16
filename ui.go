@@ -36,6 +36,17 @@ func stopUI() {
 	termui.Close()
 }
 
+// UpdateCPU updates CPU widget with new values from data.
+func (ui *UI) UpdateCPU(data []float64) {
+	intData := make([]int, len(data))
+
+	// multiply by 100, to account for 2 decimals after the point
+	for i := range data {
+		intData[i] = int(data[i] * 100)
+	}
+	ui.Sparklines.Lines[0].Data = intData
+}
+
 // Render rerenders UI.
 func (ui *UI) Render() {
 	termui.Render(ui.Header, ui.Sparklines)

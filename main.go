@@ -48,16 +48,11 @@ func main() {
 		if err != nil {
 			return
 		}
-		_ = cpu
+		data.AddCPUValue(cpu)
 
-		updateData(ui.Sparklines)
+		ui.UpdateCPU(data.CPU())
 		ui.Render()
 	})
 
 	ui.Loop()
-}
-
-func updateData(s *termui.Sparklines) {
-	data := []int{2, 2, 2, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 111, 2, 3, 23, 3, 22, 77, 8}
-	s.Lines[0].Data = data
 }

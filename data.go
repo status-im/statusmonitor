@@ -17,10 +17,12 @@ func NewData() *Data {
 	}
 }
 
+// AddCPUValues inserts new CPU measurements into data.
 func (d *Data) AddCPUValue(value float64) {
 	d.cpu.Add(value)
 }
 
-func (d *Data) CPU(n int) []float64 {
+// CPU returns CPU values.
+func (d *Data) CPU() []float64 {
 	return d.cpu.Data()
 }
