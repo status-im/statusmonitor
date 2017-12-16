@@ -16,7 +16,8 @@ type UI struct {
 
 	CPULine *termui.Sparkline
 
-	Interval time.Duration
+	// fields needed only for UI display
+	maxCPU float64
 }
 
 func initUI(pid int64, interval time.Duration) *UI {
@@ -25,10 +26,8 @@ func initUI(pid int64, interval time.Duration) *UI {
 		panic(err)
 	}
 
-	ui := &UI{
-		Interval: interval,
-	}
-	ui.createHeader(pid)
+	ui := &UI{}
+	ui.createHeader(pid, interval)
 	ui.createSparklines()
 	ui.createLayout()
 
@@ -51,10 +50,22 @@ func (ui *UI) UpdateCPU(data []float64) {
 		intData[i] = int(data[i] * 100)
 	}
 	ui.Sparklines.Lines[0].Data = intData
+
+	if len(data) == 0 {
+		return
+	}
+
+	currentCPU := data[len(data)-1]
+	if currentCPU > ui.maxCPU {
+		ui.maxCPU = currentCPU
+	}
+	ui.Sparklines.Lines[0].TitleColor = termui.ColorYellow
+	ui.Sparklines.Lines[0].Title = fmt.Sprintf("Current: %.2f%%, Max: %.2f%%", currentCPU, ui.maxCPU)
 }
 
 // Render rerenders UI.
 func (ui *UI) Render() {
+	termui.Body.Align()
 	// TODO: prettify this
 	termui.Render(ui.Headers[0], ui.Headers[1], ui.Headers[2], ui.Sparklines)
 }
@@ -80,7 +91,7 @@ func (ui *UI) createLayout() {
 	)
 }
 
-func (ui *UI) createHeader(pid int64) {
+func (ui *UI) createHeader(pid int64, interval time.Duration) {
 	p := termui.NewPar("")
 	p.Height = HeaderHeight
 	p.TextFgColor = termui.ColorWhite
@@ -100,7 +111,7 @@ func (ui *UI) createHeader(pid int64) {
 	p2.TextFgColor = termui.ColorWhite
 	p2.BorderLabel = "Polling interval"
 	p2.BorderFg = termui.ColorCyan
-	p2.Text = fmt.Sprintf("%v", ui.Interval)
+	p2.Text = fmt.Sprintf("%v", interval)
 
 	ui.Headers = []*termui.Par{p, p1, p2}
 }
@@ -108,7 +119,6 @@ func (ui *UI) createHeader(pid int64) {
 func (ui *UI) createSparklines() {
 	s := termui.NewSparkline()
 	s.Height = termui.TermHeight() - HeaderHeight - 3 // - header - border
-	s.Title = "Status.im CPU"
 	s.LineColor = termui.ColorGreen
 
 	ui.CPULine = &s
@@ -117,6 +127,7 @@ func (ui *UI) createSparklines() {
 	ss := termui.NewSparklines(s)
 	ss.Height = termui.TermHeight() - HeaderHeight
 	ss.Border = true
+	ss.BorderLabel = "CPU"
 
 	ui.Sparklines = ss
 }
