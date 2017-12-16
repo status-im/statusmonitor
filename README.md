@@ -15,5 +15,5 @@ or interactive version with plotly:
 
 ```
 library(plotly)
-plot_ly(data, x = df$timestamp, y = df$cpu, type = 'scatter', mode = 'lines')
+plot_ly(df, x = df$timestamp, y = df$cpu, type = 'scatter', mode = 'lines', fill = 'tozeroy')
 ```

@@ -25,14 +25,17 @@ func adbCPU(pid int64) (float64, error) {
 	line := parseTopOutput(out)
 
 	fields := strings.Fields(line)
-	if len(fields) != 12 {
+	if len(fields) < 10 {
 		fmt.Println("[ERROR]: wrong top output", fields)
 		return 0, ErrParse
 	}
-	cpu, err := strconv.ParseFloat(fields[8], 64)
+	cpu, err := strconv.ParseFloat(fields[9], 64)
 	if err != nil {
+		// this usually means that app is in background and top
+		// omits
 		fmt.Println("[ERROR] Parse CPU value:", err)
-		return 0, err
+		fmt.Println("Output:", fields)
+		return 0, ErrParse
 	}
 	return cpu, nil
 }
