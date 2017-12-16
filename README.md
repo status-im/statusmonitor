@@ -17,7 +17,7 @@ TODO:
 Just:
 
 ```
-go get github.com/divan/statusmonitor
+go get github.com/status-im/statusmonitor
 ```
 
 # Usage
