@@ -103,7 +103,7 @@ func (ui *UI) HandleKeys() {
 
 // AddTimer adds handler for repeatable functions that interact with UI.
 func (ui *UI) AddTimer(d time.Duration, fn func(e termui.Event)) {
-	durationStr := fmt.Sprintf("/timer/%v", d)
+	durationStr := fmt.Sprintf("/timer/%s", d)
 	termui.Handle(durationStr, fn)
 }
 

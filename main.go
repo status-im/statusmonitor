@@ -37,7 +37,6 @@ func main() {
 	}
 
 	data := NewData()
-	_ = data
 	ui := initUI(pid)
 	defer stopUI()
 
