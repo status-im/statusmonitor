@@ -34,7 +34,6 @@ func NewTopOutput(data string) (*TopOutput, error) {
 
 	cpu, err := strconv.ParseFloat(line, 64)
 	if err != nil {
-		fmt.Println("[ERROR] Parse CPU value:", err)
 		return nil, ErrParse
 	}
 

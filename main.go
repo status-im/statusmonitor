@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/gizak/termui"
@@ -56,7 +57,10 @@ func main() {
 	ui.AddTimer(*interval, func(e termui.Event) {
 		cpu, err := adbCPU(pid)
 		if err != nil {
-			return
+			// usually that means app closed or phone disconnected
+			stopUI()
+			fmt.Println("Disconnected.")
+			os.Exit(0)
 		}
 
 		// update data
