@@ -1,26 +1,9 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
-
-// adbCPU returns CPU value for the given PID via `adb shell` command.
-func adbCPU(pid int64) (float64, error) {
-	cmd := fmt.Sprintf("top -p %d -n 1 -q -b -o %%CPU", pid)
-	out, err := adbShell(cmd)
-	if err != nil {
-		return 0, err
-	}
-
-	top, err := NewTopOutput(out)
-	if err != nil {
-		return 0, err
-	}
-
-	return top.CPU, nil
-}
 
 // TopOutput represents data from 'top' command output
 // for single process.
