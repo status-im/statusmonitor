@@ -15,12 +15,13 @@ var (
 	csvdump  = flag.Bool("csv", false, "Write every point into CSV file [i.e. 20160201_150405.csv]")
 	interval = flag.Duration("i", 1*time.Second, "Update interval")
 	source   = flag.String("source", "android", "Data source (android, ios or local)")
+	procName = flag.String("proc", "im.status.ethereum", "Process name")
 )
 
 func main() {
 	flag.Parse()
 
-	src := selectSource(*source)
+	src := selectSource(*source, *procName)
 
 	pid, err := src.PID()
 	if err != nil {
@@ -80,10 +81,10 @@ func main() {
 	ui.Loop()
 }
 
-func selectSource(source string) Source {
+func selectSource(source, procName string) Source {
 	switch source {
 	case "android":
-		return &Android{}
+		return NewAndroidSource(procName)
 	case "ios":
 		log.Fatal("iOS source not implemented yet")
 	case "local":

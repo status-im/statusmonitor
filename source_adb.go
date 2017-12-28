@@ -20,7 +20,15 @@ var (
 // Android implements Source interface for Status app running on
 // Android device or emulator via 'adb' tool.
 type Android struct {
-	pid int64
+	pid      int64
+	procName string
+}
+
+// NewAndroidSource inits new source for Android with given process name.
+func NewAndroidSource(procName string) *Android {
+	return &Android{
+		procName: procName,
+	}
 }
 
 func (a *Android) PID() (int64, error) {
@@ -35,7 +43,7 @@ func (a *Android) PID() (int64, error) {
 		if len(fields) != 2 {
 			continue
 		}
-		if fields[0] == StatusIMName {
+		if fields[0] == a.procName {
 			pid, err := strconv.ParseInt(fields[1], 10, 0)
 			if err != nil {
 				return 0, err
