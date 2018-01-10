@@ -86,9 +86,6 @@ func main() {
 
 		// update data
 		data.AddCPUValue(cpu)
-		if *csvdump {
-			csv.Add(cpu)
-		}
 
 		// netstats
 		rx, tx, err := src.Netstats()
@@ -100,6 +97,11 @@ func main() {
 		}
 
 		data.AddNetworkStats(rx, tx)
+
+		// csv
+		if *csvdump {
+			csv.Add(cpu, rx, tx)
+		}
 
 		ui.UpdateCPU(data.CPU())
 		ui.UpdateNetstats(data.NetworkStats())

@@ -29,7 +29,7 @@ func NewCSVDump() (*CSVDump, error) {
 }
 
 // Adds adds new CPU value to the CSV dump.
-func (c *CSVDump) Add(value float64) {
+func (c *CSVDump) Add(cpu float64, rx, tx int64) {
 	fd, err := os.OpenFile(c.file, os.O_APPEND|os.O_WRONLY|os.O_SYNC, 0644)
 	if err != nil {
 		// we just created this file, it should not dissapear :D
@@ -38,6 +38,6 @@ func (c *CSVDump) Add(value float64) {
 
 	now := time.Now()
 
-	fd.WriteString(fmt.Sprintf("%d,%f\n", now.Unix(), value))
+	fd.WriteString(fmt.Sprintf("%d,%f,%d,%d\n", now.Unix(), cpu, rx, tx))
 	fd.Close()
 }
