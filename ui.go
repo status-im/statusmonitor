@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/gizak/termui"
+	"github.com/pyk/byten"
 )
 
 const HeaderHeight = 3
@@ -81,7 +82,7 @@ func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
 			ui.maxRx = currentRx
 		}
 		ui.Sparklines.Lines[1].Data = intData
-		ui.Sparklines.Lines[1].Title = fmt.Sprintf("Network Rx: %.2f b/s, Max: %.2f b/s", currentRx, ui.maxRx)
+		ui.Sparklines.Lines[1].Title = fmt.Sprintf("Network Rx: %v/s, Max: %v/s", byten.Size(int64(currentRx)), byten.Size(int64(ui.maxRx)))
 	}
 
 	intData = make([]int, len(dataTx))
@@ -96,7 +97,7 @@ func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
 			ui.maxTx = currentTx
 		}
 		ui.Sparklines.Lines[2].Data = intData
-		ui.Sparklines.Lines[2].Title = fmt.Sprintf("Network Tx: %.2f b/s, Max: %.2f b/s", currentTx, ui.maxTx)
+		ui.Sparklines.Lines[2].Title = fmt.Sprintf("Network Tx: %v/s, Max: %v/s", byten.Size(int64(currentTx)), byten.Size(int64(ui.maxTx)))
 	}
 }
 
@@ -177,12 +178,12 @@ func (ui *UI) createSparklines() {
 	ui.CPULine = &s
 
 	s1 := termui.NewSparkline()
-	s1.Height = (termui.TermHeight() - HeaderHeight - 3) / 3 // - border
+	s1.Height = (termui.TermHeight()-HeaderHeight-3)/3 - 1 // - border
 	s1.LineColor = termui.ColorGreen
 	s1.Title = "Network Rx"
 
 	s2 := termui.NewSparkline()
-	s2.Height = (termui.TermHeight() - HeaderHeight - 3) / 3 // - border
+	s2.Height = (termui.TermHeight()-HeaderHeight-3)/3 - 1 // - border
 	s2.LineColor = termui.ColorGreen
 	s2.Title = "Network Tx"
 
