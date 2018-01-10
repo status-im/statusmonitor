@@ -90,7 +90,19 @@ func main() {
 			csv.Add(cpu)
 		}
 
+		// netstats
+		rx, tx, err := src.Netstats()
+		if err != nil {
+			// usually that means app closed or phone disconnected
+			stopUI()
+			fmt.Println("Disconnected.")
+			os.Exit(0)
+		}
+
+		data.AddNetworkStats(rx, tx)
+
 		ui.UpdateCPU(data.CPU())
+		ui.UpdateNetstats(data.NetworkStats())
 		ui.Render()
 	})
 

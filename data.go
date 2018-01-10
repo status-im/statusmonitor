@@ -27,9 +27,9 @@ func (d *Data) AddCPUValue(value float64) {
 }
 
 // AddNetworkStats inserts new network stats into data.
-func (d *Data) AddNetworkStats(rx, tx float64) {
-	d.rxBytes.Add(rx)
-	d.txBytes.Add(tx)
+func (d *Data) AddNetworkStats(rx, tx int64) {
+	d.rxBytes.Add(float64(rx))
+	d.txBytes.Add(float64(tx))
 }
 
 // CPU returns CPU values.

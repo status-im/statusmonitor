@@ -14,11 +14,12 @@ type UI struct {
 	Headers    []*termui.Par
 	Sparklines *termui.Sparklines
 
-	CPULine *termui.Sparkline
+	CPULine        *termui.Sparkline
+	RxLine, TxLine *termui.Sparkline
 
 	// fields needed only for UI display
-	interval time.Duration
-	maxCPU   float64
+	interval             time.Duration
+	maxCPU, maxRx, maxTx float64
 }
 
 func initUI(pid int64, interval time.Duration) *UI {
@@ -62,8 +63,41 @@ func (ui *UI) UpdateCPU(data []float64) {
 	if currentCPU > ui.maxCPU {
 		ui.maxCPU = currentCPU
 	}
-	ui.Sparklines.Lines[0].TitleColor = termui.ColorYellow
-	ui.Sparklines.Lines[0].Title = fmt.Sprintf("Current: %.2f%%, Max: %.2f%%", currentCPU, ui.maxCPU)
+	ui.Sparklines.Lines[0].Title = fmt.Sprintf("CPU: %.2f%%, Max: %.2f%%", currentCPU, ui.maxCPU)
+}
+
+// UpdateNetstats updates Netstats widget with new values from data.
+func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
+	intData := make([]int, len(dataRx))
+
+	for i := 0; i < len(dataRx)-1; i++ {
+		intData[i] = int(dataRx[i+1] - dataRx[i])
+	}
+
+	last := len(dataRx) - 1
+	if last > 1 {
+		currentRx := dataRx[last] - dataRx[last-1]
+		if currentRx > ui.maxRx {
+			ui.maxRx = currentRx
+		}
+		ui.Sparklines.Lines[1].Data = intData
+		ui.Sparklines.Lines[1].Title = fmt.Sprintf("Network Rx: %.2f b/s, Max: %.2f b/s", currentRx, ui.maxRx)
+	}
+
+	intData = make([]int, len(dataTx))
+
+	for i := 0; i < len(dataTx)-1; i++ {
+		intData[i] = int(dataTx[i+1] - dataTx[i])
+	}
+	last = len(dataTx) - 1
+	if last > 1 {
+		currentTx := dataTx[last] - dataTx[last-1]
+		if currentTx > ui.maxTx {
+			ui.maxTx = currentTx
+		}
+		ui.Sparklines.Lines[2].Data = intData
+		ui.Sparklines.Lines[2].Title = fmt.Sprintf("Network Tx: %.2f b/s, Max: %.2f b/s", currentTx, ui.maxTx)
+	}
 }
 
 // Render rerenders UI.
@@ -72,7 +106,7 @@ func (ui *UI) Render() {
 
 	// Update widgets:
 	// history time estimation based on new size and interval
-	ui.Sparklines.BorderLabel = fmt.Sprintf("CPU (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+	ui.Sparklines.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 	// time in header
 	ui.Headers[3].Text = fmt.Sprintf("%v", time.Now().Format("15:04:05"))
 
@@ -136,16 +170,30 @@ func (ui *UI) createHeader(pid int64) {
 
 func (ui *UI) createSparklines() {
 	s := termui.NewSparkline()
-	s.Height = termui.TermHeight() - HeaderHeight - 3 // - border
+	s.Height = (termui.TermHeight() - HeaderHeight - 3) / 3 // - border
 	s.LineColor = termui.ColorGreen
+	s.Title = "CPU"
 
 	ui.CPULine = &s
 
+	s1 := termui.NewSparkline()
+	s1.Height = (termui.TermHeight() - HeaderHeight - 3) / 3 // - border
+	s1.LineColor = termui.ColorGreen
+	s1.Title = "Network Rx"
+
+	s2 := termui.NewSparkline()
+	s2.Height = (termui.TermHeight() - HeaderHeight - 3) / 3 // - border
+	s2.LineColor = termui.ColorGreen
+	s2.Title = "Network Tx"
+
+	ui.RxLine = &s1
+	ui.TxLine = &s2
+
 	// single
-	ss := termui.NewSparklines(s)
+	ss := termui.NewSparklines(s, s1, s2)
 	ss.Height = termui.TermHeight() - HeaderHeight
 	ss.Border = true
-	ss.BorderLabel = fmt.Sprintf("CPU (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+	ss.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 
 	ui.Sparklines = ss
 }
