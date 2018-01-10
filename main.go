@@ -26,9 +26,17 @@ func main() {
 	pid, err := src.PID()
 	if err != nil {
 		fmt.Println("Status.im PID not found. Please, make sure that `adb devices` shows your device connected to the computer and Status.im app is launched")
+		fmt.Println("Error:", err)
 		return
 	}
 	fmt.Println("Status.im is found on PID", pid)
+
+	_, err = src.UID()
+	if err != nil {
+		fmt.Println("Status.im UID not found. Please, make sure that `adb devices` shows your device connected to the computer and Status.im app is launched")
+		fmt.Println("Error:", err)
+		return
+	}
 
 	if *debug {
 		for {
@@ -38,6 +46,14 @@ func main() {
 				continue
 			}
 			fmt.Println("CPU:", cpu)
+
+			rx, tx, err := src.Netstats()
+			if err != nil {
+				fmt.Println("[ERROR]:", err)
+				continue
+			}
+			fmt.Printf("Netstats (rx/tx): %v/%v bytes\n", rx, tx)
+
 			time.Sleep(*interval)
 		}
 		return

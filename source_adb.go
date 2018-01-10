@@ -13,6 +13,7 @@ const StatusIMName = "im.status.ethereum"
 
 var (
 	ErrPidNotFound = errors.New("PID not found")
+	ErrUIDNotFound = errors.New("UID not found")
 	ErrCmdFailed   = errors.New("command failed")
 	ErrParse       = errors.New("parse failed")
 )
@@ -20,7 +21,10 @@ var (
 // Android implements Source interface for Status app running on
 // Android device or emulator via 'adb' tool.
 type Android struct {
-	pid      int64
+	pid int64
+	// uid is used for parsing /proc/net/xt_qtaguid/stats output
+	// TODO: find if there is a way to get stats by PID instead of UID
+	uid      int64
 	procName string
 }
 
@@ -56,6 +60,21 @@ func (a *Android) PID() (int64, error) {
 	return 0, ErrPidNotFound
 }
 
+func (a *Android) UID() (int64, error) {
+	cmd := fmt.Sprintf("dumpsys package %s", a.procName)
+	output, err := a.shell(cmd)
+	if err != nil {
+		return 0, err
+	}
+
+	dumpsys, err := NewDumpSysOutput(output)
+	if err != nil {
+		return 0, ErrUIDNotFound
+	}
+
+	return dumpsys.UID, nil
+}
+
 func (a *Android) CPU() (float64, error) {
 	cmd := fmt.Sprintf("top -p %d -n 1 -q -b -o %%CPU", a.pid)
 	out, err := a.shell(cmd)
@@ -69,6 +88,20 @@ func (a *Android) CPU() (float64, error) {
 	}
 
 	return top.CPU, nil
+}
+
+func (a *Android) Netstats() (int64, int64, error) {
+	out, err := a.shell("cat /proc/net/xt_qtaguid/stats")
+	if err != nil {
+		return 0, 0, err
+	}
+
+	netstats, err := NewQTagUIDOutput(out, a.uid)
+	if err != nil {
+		return 0, 0, err
+	}
+
+	return netstats.RxBytes, netstats.TxBytes, nil
 }
 
 func (a *Android) shell(command string) (string, error) {
