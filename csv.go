@@ -20,7 +20,7 @@ func NewCSVDump() (*CSVDump, error) {
 	if err != nil {
 		return nil, err
 	}
-	fd.WriteString("timestamp,cpu\n")
+	fd.WriteString("timestamp,cpu,rx,tx\n")
 	fd.Close()
 
 	return &CSVDump{
