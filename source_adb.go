@@ -90,6 +90,21 @@ func (a *Android) CPU() (float64, error) {
 	return top.CPU, nil
 }
 
+func (a *Android) MemStats() (uint64, error) {
+	cmd := fmt.Sprintf("dumpsys meminfo -c -s %v", a.pid)
+	out, err := a.shell(cmd)
+	if err != nil {
+		return 0, err
+	}
+
+	memInfo, err := NewMemInfoOutput(out)
+	if err != nil {
+		return 0, err
+	}
+
+	return memInfo.UsedMem, nil
+}
+
 func (a *Android) Netstats() (int64, int64, error) {
 	out, err := a.shell("cat /proc/net/xt_qtaguid/stats")
 	if err != nil {

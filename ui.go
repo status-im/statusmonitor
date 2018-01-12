@@ -11,6 +11,7 @@ import (
 const headerHeight = 3
 const (
 	cpuSparklineIndex = iota
+	usedMemSparklineIndex
 	rxSparklineIndex
 	txSparklineIndex
 	numSparklines
@@ -22,11 +23,12 @@ type UI struct {
 	Sparklines *termui.Sparklines
 
 	CPULine        *termui.Sparkline
+	UsedMemLine    *termui.Sparkline
 	RxLine, TxLine *termui.Sparkline
 
 	// fields needed only for UI display
-	interval             time.Duration
-	maxCPU, maxRx, maxTx float64
+	interval                                     time.Duration
+	maxCPU, minUsedMem, maxUsedMem, maxRx, maxTx float64
 }
 
 func initUI(pid int64, interval time.Duration) *UI {
@@ -36,7 +38,8 @@ func initUI(pid int64, interval time.Duration) *UI {
 	}
 
 	ui := &UI{
-		interval: interval,
+		interval:   interval,
+		minUsedMem: -1.,
 	}
 	ui.createHeader(pid)
 	ui.createSparklines()
@@ -72,6 +75,31 @@ func (ui *UI) UpdateCPU(data []float64) {
 		ui.maxCPU = currentCPU
 	}
 	line.Title = fmt.Sprintf("CPU: %.2f%%, Max: %.2f%%", currentCPU, ui.maxCPU)
+}
+
+// UpdateMemoryStats updates memory usage widget with new values from data.
+func (ui *UI) UpdateMemoryStats(data []float64) {
+	intData := make([]int, len(data))
+
+	// multiply by 100, to account for 2 decimals after the point
+	for i := range data {
+		intData[i] = int(data[i] * 100)
+	}
+	line := &ui.Sparklines.Lines[usedMemSparklineIndex]
+	line.Data = intData
+
+	if len(data) == 0 {
+		return
+	}
+
+	currentUsedMem := data[len(data)-1]
+	if ui.minUsedMem < 0. || currentUsedMem < ui.minUsedMem {
+		ui.minUsedMem = currentUsedMem
+	}
+	if currentUsedMem > ui.maxUsedMem {
+		ui.maxUsedMem = currentUsedMem
+	}
+	line.Title = fmt.Sprintf("Used mem: %v, Min: %v, Max: %v", byten.Size(int64(currentUsedMem)), byten.Size(int64(ui.minUsedMem)), byten.Size(int64(ui.maxUsedMem)))
 }
 
 // UpdateNetstats updates Netstats widget with new values from data.
@@ -187,6 +215,14 @@ func (ui *UI) createSparklines() {
 	sparklines[cpuSparklineIndex] = sCPU
 
 	ui.CPULine = &sCPU
+
+	sUsedMem := termui.NewSparkline()
+	sUsedMem.Height = (termui.TermHeight() - headerHeight - 3) / cap(sparklines) // - border
+	sUsedMem.LineColor = termui.ColorGreen
+	sUsedMem.Title = "Used Mem"
+	sparklines[usedMemSparklineIndex] = sUsedMem
+
+	ui.UsedMemLine = &sUsedMem
 
 	sRx := termui.NewSparkline()
 	sRx.Height = (termui.TermHeight()-headerHeight-3)/cap(sparklines) - 1 // - border
