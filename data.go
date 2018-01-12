@@ -21,7 +21,7 @@ func NewData() *Data {
 	}
 }
 
-// AddCPUValues inserts new CPU measurements into data.
+// AddCPUValue inserts new CPU measurements into data.
 func (d *Data) AddCPUValue(value float64) {
 	d.cpu.Add(value)
 }
@@ -37,7 +37,7 @@ func (d *Data) CPU() []float64 {
 	return d.cpu.Data()
 }
 
-// CPU returns CPU values.
+// NetworkStats returns network stat values.
 func (d *Data) NetworkStats() (rx, tx []float64) {
 	return d.rxBytes.Data(), d.txBytes.Data()
 }
