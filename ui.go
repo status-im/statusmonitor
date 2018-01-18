@@ -99,7 +99,7 @@ func (ui *UI) UpdateMemoryStats(data []float64) {
 	if currentUsedMem > ui.maxUsedMem {
 		ui.maxUsedMem = currentUsedMem
 	}
-	line.Title = fmt.Sprintf("Used mem: %v, Min: %v, Max: %v", byten.Size(int64(currentUsedMem)), byten.Size(int64(ui.minUsedMem)), byten.Size(int64(ui.maxUsedMem)))
+	line.Title = fmt.Sprintf("Used mem: %v, Min: %v, Max: %v", memSize(currentUsedMem), memSize(ui.minUsedMem), memSize(ui.maxUsedMem))
 }
 
 // UpdateNetstats updates Netstats widget with new values from data.
@@ -112,13 +112,14 @@ func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
 
 	last := len(dataRx) - 1
 	if last > 1 {
+		currentTotal := dataRx[last]
 		currentRx := dataRx[last] - dataRx[last-1]
 		if currentRx > ui.maxRx {
 			ui.maxRx = currentRx
 		}
 		line := &ui.SparklinesRight.Lines[rxSparklineIndex]
 		line.Data = intData
-		line.Title = fmt.Sprintf("Network Rx: %v/s, Max: %v/s", byten.Size(int64(currentRx)), byten.Size(int64(ui.maxRx)))
+		line.Title = fmt.Sprintf("Network Rx: %v/s, Max: %v/s (total: %v)", memSize(currentRx), memSize(ui.maxRx), memSize(currentTotal))
 	}
 
 	intData = make([]int, len(dataTx))
@@ -128,13 +129,14 @@ func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
 	}
 	last = len(dataTx) - 1
 	if last > 1 {
+		currentTotal := dataTx[last]
 		currentTx := dataTx[last] - dataTx[last-1]
 		if currentTx > ui.maxTx {
 			ui.maxTx = currentTx
 		}
 		line := &ui.SparklinesRight.Lines[txSparklineIndex]
 		line.Data = intData
-		line.Title = fmt.Sprintf("Network Tx: %v/s, Max: %v/s", byten.Size(int64(currentTx)), byten.Size(int64(ui.maxTx)))
+		line.Title = fmt.Sprintf("Network Tx: %v/s, Max: %v/s (total: %v)", memSize(currentTx), memSize(ui.maxTx), memSize(currentTotal))
 	}
 }
 
@@ -281,4 +283,9 @@ func (ui *UI) AddTimer(d time.Duration, fn func(e termui.Event)) {
 // Loop starts event loop and blocks.
 func (ui *UI) Loop() {
 	termui.Loop()
+}
+
+// memSize is a wrapper around value.
+func memSize(value float64) string {
+	return byten.Size(int64(value))
 }
