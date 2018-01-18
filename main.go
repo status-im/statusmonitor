@@ -47,6 +47,13 @@ func main() {
 			}
 			fmt.Println("CPU:", cpu)
 
+			usedMem, err := src.MemStats()
+			if err != nil {
+				fmt.Println("[ERROR]:", err)
+				continue
+			}
+			fmt.Println("Used Mem:", usedMem)
+
 			rx, tx, err := src.Netstats()
 			if err != nil {
 				fmt.Println("[ERROR]:", err)
@@ -87,6 +94,17 @@ func main() {
 		// update data
 		data.AddCPUValue(cpu)
 
+		usedMem, err := src.MemStats()
+		if err != nil {
+			// usually that means app closed or phone disconnected
+			stopUI()
+			fmt.Println("Disconnected.")
+			os.Exit(0)
+		}
+
+		// update data
+		data.AddMemoryStats(usedMem)
+
 		// netstats
 		rx, tx, err := src.Netstats()
 		if err != nil {
@@ -100,10 +118,11 @@ func main() {
 
 		// csv
 		if *csvdump {
-			csv.Add(cpu, rx, tx)
+			csv.Add(cpu, usedMem, rx, tx)
 		}
 
 		ui.UpdateCPU(data.CPU())
+		ui.UpdateMemoryStats(data.MemoryStats())
 		ui.UpdateNetstats(data.NetworkStats())
 		ui.Render()
 	})
