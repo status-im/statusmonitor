@@ -10,17 +10,17 @@ import (
 
 const headerHeight = 3
 const (
-	cpuSparklineIndex = iota
-	usedMemSparklineIndex
-	rxSparklineIndex
-	txSparklineIndex
-	numSparklines
+	cpuSparklineIndex     = 0
+	usedMemSparklineIndex = 1
+
+	rxSparklineIndex = 0
+	txSparklineIndex = 1
 )
 
 // UI represents UI layout.
 type UI struct {
-	Headers    []*termui.Par
-	Sparklines *termui.Sparklines
+	Headers                         []*termui.Par
+	SparklinesLeft, SparklinesRight *termui.Sparklines
 
 	CPULine        *termui.Sparkline
 	UsedMemLine    *termui.Sparkline
@@ -63,7 +63,7 @@ func (ui *UI) UpdateCPU(data []float64) {
 	for i := range data {
 		intData[i] = int(data[i] * 100)
 	}
-	line := &ui.Sparklines.Lines[cpuSparklineIndex]
+	line := &ui.SparklinesLeft.Lines[cpuSparklineIndex]
 	line.Data = intData
 
 	if len(data) == 0 {
@@ -85,7 +85,7 @@ func (ui *UI) UpdateMemoryStats(data []float64) {
 	for i := range data {
 		intData[i] = int(data[i] * 100)
 	}
-	line := &ui.Sparklines.Lines[usedMemSparklineIndex]
+	line := &ui.SparklinesLeft.Lines[usedMemSparklineIndex]
 	line.Data = intData
 
 	if len(data) == 0 {
@@ -116,7 +116,7 @@ func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
 		if currentRx > ui.maxRx {
 			ui.maxRx = currentRx
 		}
-		line := &ui.Sparklines.Lines[rxSparklineIndex]
+		line := &ui.SparklinesRight.Lines[rxSparklineIndex]
 		line.Data = intData
 		line.Title = fmt.Sprintf("Network Rx: %v/s, Max: %v/s", byten.Size(int64(currentRx)), byten.Size(int64(ui.maxRx)))
 	}
@@ -132,7 +132,7 @@ func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
 		if currentTx > ui.maxTx {
 			ui.maxTx = currentTx
 		}
-		line := &ui.Sparklines.Lines[txSparklineIndex]
+		line := &ui.SparklinesRight.Lines[txSparklineIndex]
 		line.Data = intData
 		line.Title = fmt.Sprintf("Network Tx: %v/s, Max: %v/s", byten.Size(int64(currentTx)), byten.Size(int64(ui.maxTx)))
 	}
@@ -144,7 +144,7 @@ func (ui *UI) Render() {
 
 	// Update widgets:
 	// history time estimation based on new size and interval
-	ui.Sparklines.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+	ui.SparklinesLeft.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 	// time in header
 	ui.Headers[3].Text = fmt.Sprintf("%v", time.Now().Format("15:04:05"))
 
@@ -168,7 +168,8 @@ func (ui *UI) createLayout() {
 			termui.NewCol(2, 0, ui.Headers[3]),
 		),
 		termui.NewRow(
-			termui.NewCol(12, 0, ui.Sparklines),
+			termui.NewCol(6, 0, ui.SparklinesLeft),
+			termui.NewCol(6, 0, ui.SparklinesRight),
 		),
 	)
 }
@@ -206,46 +207,52 @@ func (ui *UI) createHeader(pid int64) {
 }
 
 func (ui *UI) createSparklines() {
-	sparklines := make([]termui.Sparkline, numSparklines)
+	sparklines1 := make([]termui.Sparkline, 2)
 
 	sCPU := termui.NewSparkline()
-	sCPU.Height = (termui.TermHeight() - headerHeight - 3) / cap(sparklines) // - border
+	sCPU.Height = (termui.TermHeight() - headerHeight - 3) / 2
 	sCPU.LineColor = termui.ColorGreen
 	sCPU.Title = "CPU"
-	sparklines[cpuSparklineIndex] = sCPU
+	sparklines1[cpuSparklineIndex] = sCPU
 
 	ui.CPULine = &sCPU
 
 	sUsedMem := termui.NewSparkline()
-	sUsedMem.Height = (termui.TermHeight() - headerHeight - 3) / cap(sparklines) // - border
+	sUsedMem.Height = (termui.TermHeight()-headerHeight-3)/2 - 1
 	sUsedMem.LineColor = termui.ColorGreen
 	sUsedMem.Title = "Used Mem"
-	sparklines[usedMemSparklineIndex] = sUsedMem
+	sparklines1[usedMemSparklineIndex] = sUsedMem
 
 	ui.UsedMemLine = &sUsedMem
 
+	sparklines2 := make([]termui.Sparkline, 2)
 	sRx := termui.NewSparkline()
-	sRx.Height = (termui.TermHeight()-headerHeight-3)/cap(sparklines) - 1 // - border
+	sRx.Height = (termui.TermHeight() - headerHeight - 3) / 2
 	sRx.LineColor = termui.ColorGreen
 	sRx.Title = "Network Rx"
-	sparklines[rxSparklineIndex] = sRx
+	sparklines2[rxSparklineIndex] = sRx
 
 	sTx := termui.NewSparkline()
-	sTx.Height = (termui.TermHeight()-headerHeight-3)/cap(sparklines) - 1 // - border
+	sTx.Height = (termui.TermHeight() - headerHeight - 3) / 2
 	sTx.LineColor = termui.ColorGreen
 	sTx.Title = "Network Tx"
-	sparklines[txSparklineIndex] = sTx
+	sparklines2[txSparklineIndex] = sTx
 
 	ui.RxLine = &sRx
 	ui.TxLine = &sTx
 
-	// single
-	ss := termui.NewSparklines(sparklines...)
-	ss.Height = termui.TermHeight() - headerHeight
-	ss.Border = true
-	ss.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+	sleft := termui.NewSparklines(sparklines1...)
+	sleft.Height = termui.TermHeight() - headerHeight
+	sleft.Border = true
+	sleft.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 
-	ui.Sparklines = ss
+	sright := termui.NewSparklines(sparklines2...)
+	sright.Height = termui.TermHeight() - headerHeight
+	sright.Border = true
+	sright.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+
+	ui.SparklinesLeft = sleft
+	ui.SparklinesRight = sright
 }
 
 func (ui *UI) getUIElements() []termui.Bufferer {
@@ -253,7 +260,7 @@ func (ui *UI) getUIElements() []termui.Bufferer {
 	for _, h := range ui.Headers {
 		uiElements = append(uiElements, h)
 	}
-	uiElements = append(uiElements, ui.Sparklines)
+	uiElements = append(uiElements, ui.SparklinesLeft, ui.SparklinesRight)
 
 	return uiElements
 }
