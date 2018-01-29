@@ -10,6 +10,9 @@ import (
 	"github.com/gizak/termui"
 )
 
+// Should be enough for wide-screen terminals
+const HistoryLimit = 1024
+
 var (
 	debug    = flag.Bool("debug", false, "Disable UI and see raw data (debug mode)")
 	csvdump  = flag.Bool("csv", false, "Write every point into CSV file [i.e. 20160201_150405.csv]")
@@ -67,7 +70,7 @@ func main() {
 	}
 
 	// init stuff
-	data := NewData()
+	data := NewData(HistoryLimit)
 	var csv *CSVDump
 	if *csvdump {
 		csv, err = NewCSVDump()

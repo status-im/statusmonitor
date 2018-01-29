@@ -1,8 +1,5 @@
 package main
 
-// Should be enough for wide-screen terminals
-const HistoryLimit = 1024
-
 // Data holds actual data values, being a buffer for
 // UI widges and responsible for flushing/updating/deleting
 // old values.
@@ -14,12 +11,12 @@ type Data struct {
 }
 
 // NewData inits new data object.
-func NewData() *Data {
+func NewData(historyLimit int) *Data {
 	return &Data{
-		cpu:     NewCircularBuffer(HistoryLimit),
-		mem:     NewCircularBuffer(HistoryLimit),
-		txBytes: NewCircularBuffer(HistoryLimit),
-		rxBytes: NewCircularBuffer(HistoryLimit),
+		cpu:     NewCircularBuffer(historyLimit),
+		mem:     NewCircularBuffer(historyLimit),
+		txBytes: NewCircularBuffer(historyLimit),
+		rxBytes: NewCircularBuffer(historyLimit),
 	}
 }
 

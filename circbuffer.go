@@ -6,13 +6,13 @@ package main
 // are retained.
 type CircularBuffer struct {
 	data         []float64
-	size         int64
-	writeCursor  int64
+	size         int
+	writeCursor  int
 	writeOpCount int64
 }
 
 // NewCircularBuffer creates a new buffer of a given size
-func NewCircularBuffer(size int64) *CircularBuffer {
+func NewCircularBuffer(size int) *CircularBuffer {
 	if size <= 0 {
 		panic("Size must be positive")
 	}
@@ -33,7 +33,7 @@ func (b *CircularBuffer) Add(value float64) error {
 }
 
 // Size returns the size of the buffer
-func (b *CircularBuffer) Size() int64 {
+func (b *CircularBuffer) Size() int {
 	return b.size
 }
 
@@ -45,11 +45,11 @@ func (b *CircularBuffer) TotalWriteOpCount() int64 {
 // Data returns ordered data from buffer, from old to new.
 func (b *CircularBuffer) Data() []float64 {
 	switch {
-	case b.writeOpCount >= b.size && b.writeCursor == 0:
+	case b.writeOpCount >= int64(b.size) && b.writeCursor == 0:
 		out := make([]float64, b.size)
 		copy(out, b.data)
 		return out
-	case b.writeOpCount > b.size:
+	case b.writeOpCount > int64(b.size):
 		out := make([]float64, b.size)
 		copy(out, b.data[b.writeCursor:])
 		copy(out[b.size-b.writeCursor:], b.data[:b.writeCursor])
