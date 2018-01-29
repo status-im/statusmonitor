@@ -72,6 +72,8 @@ func (a *Android) UID() (int64, error) {
 		return 0, ErrUIDNotFound
 	}
 
+	a.uid = dumpsys.UID
+
 	return dumpsys.UID, nil
 }
 
