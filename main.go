@@ -91,38 +91,57 @@ func main() {
 	ui.HandleKeys()
 
 	ui.AddTimer(*interval, func(e termui.Event) {
-		cpu, err := src.CPU()
-		if err != nil {
-			// usually that means app closed or phone disconnected
-			stopUI()
-			fmt.Println("Disconnected.")
-			os.Exit(0)
-		}
+		cpuChan := make(chan float64)
+		go func() {
+			cpu, err := src.CPU()
+			if err != nil {
+				// usually that means app closed or phone disconnected
+				stopUI()
+				fmt.Println("Disconnected.")
+				os.Exit(0)
+			}
 
-		// update data
-		data.AddCPUValue(cpu)
+			// update data
+			data.AddCPUValue(cpu)
+			cpuChan <- cpu
+		}()
 
-		usedMem, err := src.MemStats()
-		if err != nil {
-			// usually that means app closed or phone disconnected
-			stopUI()
-			fmt.Println("Disconnected.")
-			os.Exit(0)
-		}
+		usedMemChan := make(chan uint64)
+		go func() {
+			usedMem, err := src.MemStats()
+			if err != nil {
+				// usually that means app closed or phone disconnected
+				stopUI()
+				fmt.Println("Disconnected.")
+				os.Exit(0)
+			}
 
-		// update data
-		data.AddMemoryStats(usedMem)
+			// update data
+			data.AddMemoryStats(usedMem)
+			usedMemChan <- usedMem
+		}()
 
 		// netstats
-		rx, tx, err := src.Netstats()
-		if err != nil {
-			// usually that means app closed or phone disconnected
-			stopUI()
-			fmt.Println("Disconnected.")
-			os.Exit(0)
-		}
+		netRxChan := make(chan int64)
+		netTxChan := make(chan int64)
+		go func() {
+			rx, tx, err := src.Netstats()
+			if err != nil {
+				// usually that means app closed or phone disconnected
+				stopUI()
+				fmt.Println("Disconnected.")
+				os.Exit(0)
+			}
 
-		data.AddNetworkStats(rx, tx)
+			data.AddNetworkStats(rx, tx)
+			netRxChan <- rx
+			netTxChan <- tx
+		}()
+
+		cpu := <-cpuChan
+		usedMem := <-usedMemChan
+		rx := <-netRxChan
+		tx := <-netTxChan
 
 		// csv
 		if *csvdump {
