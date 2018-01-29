@@ -129,8 +129,10 @@ func (ui *UI) updateNetstats(sparklineIndex int, data []float64) {
 			direction = "Tx"
 		}
 
-		total := data[last]
-		current := total - data[last-1]
+		baseline := data[0]
+		total := data[last] - baseline
+		prev := data[last-1] - baseline
+		current := total - prev
 		if current > *max {
 			*max = current
 		}
