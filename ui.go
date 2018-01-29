@@ -10,11 +10,12 @@ import (
 
 const headerHeight = 3
 const (
-	cpuSparklineIndex     = 0
-	usedMemSparklineIndex = 1
-
-	rxSparklineIndex = 0
-	txSparklineIndex = 1
+	cpuSparklineIndex = iota
+	usedMemSparklineIndex
+)
+const (
+	rxSparklineIndex = iota
+	txSparklineIndex
 )
 
 // UI represents UI layout.
@@ -103,40 +104,39 @@ func (ui *UI) UpdateMemoryStats(data []float64) {
 }
 
 // UpdateNetstats updates Netstats widget with new values from data.
-func (ui *UI) UpdateNetstats(dataRx, dataTx []float64) {
-	intData := make([]int, len(dataRx))
+func (ui *UI) UpdateNetstats(rxData, txData []float64) {
+	ui.updateNetstats(rxSparklineIndex, rxData)
+	ui.updateNetstats(txSparklineIndex, txData)
+}
 
-	for i := 0; i < len(dataRx)-1; i++ {
-		intData[i] = int(dataRx[i+1] - dataRx[i])
+func (ui *UI) updateNetstats(sparklineIndex int, data []float64) {
+	intData := make([]int, len(data))
+
+	for i := 0; i < len(data)-1; i++ {
+		intData[i] = int(data[i+1] - data[i])
 	}
 
-	last := len(dataRx) - 1
+	last := len(data) - 1
 	if last > 1 {
-		currentTotal := dataRx[last]
-		currentRx := dataRx[last] - dataRx[last-1]
-		if currentRx > ui.maxRx {
-			ui.maxRx = currentRx
+		var direction string
+		var max *float64
+		switch sparklineIndex {
+		case rxSparklineIndex:
+			max = &ui.maxRx
+			direction = "Rx"
+		case txSparklineIndex:
+			max = &ui.maxTx
+			direction = "Tx"
 		}
-		line := &ui.SparklinesRight.Lines[rxSparklineIndex]
-		line.Data = intData
-		line.Title = fmt.Sprintf("Network Rx: %v/s, Max: %v/s (total: %v)", memSize(currentRx), memSize(ui.maxRx), memSize(currentTotal))
-	}
 
-	intData = make([]int, len(dataTx))
-
-	for i := 0; i < len(dataTx)-1; i++ {
-		intData[i] = int(dataTx[i+1] - dataTx[i])
-	}
-	last = len(dataTx) - 1
-	if last > 1 {
-		currentTotal := dataTx[last]
-		currentTx := dataTx[last] - dataTx[last-1]
-		if currentTx > ui.maxTx {
-			ui.maxTx = currentTx
+		total := data[last]
+		current := total - data[last-1]
+		if current > *max {
+			*max = current
 		}
-		line := &ui.SparklinesRight.Lines[txSparklineIndex]
+		line := &ui.SparklinesRight.Lines[sparklineIndex]
 		line.Data = intData
-		line.Title = fmt.Sprintf("Network Tx: %v/s, Max: %v/s (total: %v)", memSize(currentTx), memSize(ui.maxTx), memSize(currentTotal))
+		line.Title = fmt.Sprintf("Network %s: %v/s, Max: %v/s (total: %v)", direction, memSize(current), memSize(*max), memSize(total))
 	}
 }
 

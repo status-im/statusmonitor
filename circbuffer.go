@@ -5,10 +5,10 @@ package main
 // of size N, for any amount of writes, only the last N values
 // are retained.
 type CircularBuffer struct {
-	data        []float64
-	size        int64
-	writeCursor int64
-	written     int64
+	data         []float64
+	size         int64
+	writeCursor  int64
+	writeOpCount int64
 }
 
 // NewCircularBuffer creates a new buffer of a given size
@@ -28,7 +28,7 @@ func NewCircularBuffer(size int64) *CircularBuffer {
 func (b *CircularBuffer) Add(value float64) error {
 	b.data[b.writeCursor] = value
 	b.writeCursor = ((b.writeCursor + 1) % b.size)
-	b.written++
+	b.writeOpCount++
 	return nil
 }
 
@@ -37,19 +37,19 @@ func (b *CircularBuffer) Size() int64 {
 	return b.size
 }
 
-// TotalWritten provides the total number of values written
-func (b *CircularBuffer) TotalWritten() int64 {
-	return b.written
+// TotalWriteOpCount provides the total number of values written
+func (b *CircularBuffer) TotalWriteOpCount() int64 {
+	return b.writeOpCount
 }
 
 // Data returns ordered data from buffer, from old to new.
 func (b *CircularBuffer) Data() []float64 {
 	switch {
-	case b.written >= b.size && b.writeCursor == 0:
+	case b.writeOpCount >= b.size && b.writeCursor == 0:
 		out := make([]float64, b.size)
 		copy(out, b.data)
 		return out
-	case b.written > b.size:
+	case b.writeOpCount > b.size:
 		out := make([]float64, b.size)
 		copy(out, b.data[b.writeCursor:])
 		copy(out[b.size-b.writeCursor:], b.data[:b.writeCursor])
@@ -64,5 +64,5 @@ func (b *CircularBuffer) Data() []float64 {
 // Reset resets the buffer so it has no content.
 func (b *CircularBuffer) Reset() {
 	b.writeCursor = 0
-	b.written = 0
+	b.writeOpCount = 0
 }

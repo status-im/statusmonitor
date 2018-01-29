@@ -1,5 +1,6 @@
 package main
 
+// Local is a dummy implementation of the Source interface.
 type Local struct {
 }
 
