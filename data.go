@@ -53,3 +53,10 @@ func (d *Data) MemoryStats() (used []float64) {
 func (d *Data) NetworkStats() (rx, tx []float64) {
 	return d.rxBytes.Data(), d.txBytes.Data()
 }
+
+// Clear clears all data.
+func (d *Data) Clear() {
+	for _, b := range [...]*CircularBuffer{d.cpu, d.mem, d.rxBytes, d.txBytes} {
+		b.Reset()
+	}
+}

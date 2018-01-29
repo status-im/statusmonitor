@@ -80,6 +80,11 @@ func main() {
 	ui := initUI(pid, *interval)
 	defer stopUI()
 
+	// handle key r pressing
+	termui.Handle("/sys/kbd/r", func(termui.Event) {
+		data.Clear()
+	})
+
 	ui.HandleKeys()
 
 	ui.AddTimer(*interval, func(e termui.Event) {

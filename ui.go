@@ -182,7 +182,7 @@ func (ui *UI) createHeader(pid int64) {
 	p.TextFgColor = termui.ColorWhite
 	p.BorderLabel = "Monitoring Status.im via adb"
 	p.BorderFg = termui.ColorCyan
-	p.Text = "press 'q' to exit"
+	p.Text = "press 'q' to exit, 'r' to reset"
 
 	p1 := termui.NewPar("")
 	p1.Height = headerHeight
