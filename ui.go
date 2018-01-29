@@ -148,7 +148,10 @@ func (ui *UI) Render() {
 
 	// Update widgets:
 	// history time estimation based on new size and interval
-	ui.SparklinesLeft.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
+	length := len(ui.SparklinesLeft.Lines[cpuSparklineIndex].Data)
+	ui.SparklinesLeft.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(length)*ui.interval)
+	length = len(ui.SparklinesLeft.Lines[rxSparklineIndex].Data)
+	ui.SparklinesRight.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(length)*ui.interval)
 	// time in header
 	ui.Headers[3].Text = fmt.Sprintf("%v", time.Now().Format("15:04:05"))
 
@@ -248,12 +251,10 @@ func (ui *UI) createSparklines() {
 	sleft := termui.NewSparklines(sparklines1...)
 	sleft.Height = termui.TermHeight() - headerHeight
 	sleft.Border = true
-	sleft.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 
 	sright := termui.NewSparklines(sparklines2...)
 	sright.Height = termui.TermHeight() - headerHeight
 	sright.Border = true
-	sright.BorderLabel = fmt.Sprintf("Data (last %v)", time.Duration(termui.TermWidth()-2)*ui.interval)
 
 	ui.SparklinesLeft = sleft
 	ui.SparklinesRight = sright
