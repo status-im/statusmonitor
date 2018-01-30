@@ -48,21 +48,21 @@ func main() {
 				fmt.Println("[ERROR]:", err)
 				continue
 			}
-			fmt.Println("CPU:", cpu)
+			fmt.Printf("[%v] CPU: %v\n", time.Now().Format(time.RFC3339), cpu)
 
 			usedMem, err := src.MemStats()
 			if err != nil {
 				fmt.Println("[ERROR]:", err)
 				continue
 			}
-			fmt.Println("Used Mem:", usedMem)
+			fmt.Printf("[%v] Used Mem: %v\n", time.Now().Format(time.RFC3339), usedMem)
 
 			rx, tx, err := src.Netstats()
 			if err != nil {
 				fmt.Println("[ERROR]:", err)
 				continue
 			}
-			fmt.Printf("Netstats (rx/tx): %v/%v bytes\n", rx, tx)
+			fmt.Printf("[%v] Netstats (rx/tx): %v/%v bytes\n", time.Now().Format(time.RFC3339), rx, tx)
 
 			time.Sleep(*interval)
 		}
